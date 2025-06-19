@@ -24,14 +24,6 @@
 
 ---
 
-## 🖼️ Screenshot
-
-<img src="C:\Users\Vijithaa K J\Downloads\screenshot-web.png" width="700"/>
-<img src="C:\Users\Vijithaa K J\Downloads\screenshot-web1.png" width="700"/>
-<img src="C:\Users\Vijithaa K J\Downloads\screenshot-web2.png" width="700"/>
-
----
-
 ## 📁 Folder Structure
 resume-analyzer/
 ├── main.py
