@@ -40,14 +40,14 @@ def get_template_image_url(template_name):
 def analyze_resume(text):
     prompt = f"""
 You are an expert career coach. Analyze this resume and provide:
-1. 🌟 Suggested Job Titles
-2. ✅ Key Strengths
-3. ⚠️ Areas of Improvement
-4. 🔍 Missing Keywords for data science
-5. 📏 Estimated ATS pass probability (0–100%)
-6. 🧹 Section recommendations (e.g., add Projects, Portfolio link)
-7. 📝 Resume style feedback
-8. 🌈 Suggest one best-fitting resume template name from only these options: Minimalist Classic, Modern Creative, One-page Professional. Return only one name.
+1.  Suggested Job Titles
+2.  Key Strengths
+3.  Areas of Improvement
+4.  Missing Keywords for data science
+5.  Estimated ATS pass probability (0–100%)
+6.  Section recommendations (e.g., add Projects, Portfolio link)
+7.  Resume style feedback
+8.  Suggest one best-fitting resume template name from only these options: Minimalist Classic, Modern Creative, One-page Professional. Return only one name.
 
 Resume:
 {text}
@@ -69,7 +69,7 @@ def extract_template_name(response_text):
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="Enhanced AI Resume Coach", layout="centered")
-st.title("🌟 AI Resume Analyzer & Template Advisor")
+st.title(" AI Resume Analyzer & Template Advisor")
 
 uploaded_files = st.file_uploader("Upload one or more resumes (PDFs)", type=["pdf"], accept_multiple_files=True)
 if uploaded_files:
@@ -80,18 +80,18 @@ if uploaded_files:
             if not is_resume(text):
                 st.error("❌ This doesn't appear to be a resume. Please upload a valid resume PDF.")
             else:
-                with st.spinner("🧠 Analyzing with AI..."):
+                with st.spinner(" Analyzing with AI..."):
                     result = analyze_resume(text)
-                st.markdown("#### 🧠 AI Feedback:")
+                st.markdown("####  AI Feedback:")
                 st.markdown(result, unsafe_allow_html=True)
 
                 recommended_template = extract_template_name(result)
                 if recommended_template:
                     template_info = get_template_image_url(recommended_template)
                     if template_info:
-                        st.markdown("#### 🌈 Recommended Resume Template")
+                        st.markdown("####  Recommended Resume Template")
                         st.image(template_info["img"], use_container_width=True)
                         st.markdown(f"**Recommended Style**: {recommended_template}")
-                        st.markdown(f"[🔗 View or Download Template]({template_info['link']})")
+                        st.markdown(f"[ View or Download Template]({template_info['link']})")
         else:
             st.error("Couldn't extract text, try another PDF.")
