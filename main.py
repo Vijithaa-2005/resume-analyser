@@ -79,26 +79,13 @@ Resume:
         {"role": "user", "content": prompt}
     ]
 
-    try:
-        # 🔥 Try large model first
-        resp = client.chat.completions.create(
-            model="llama3-70b-8192",
-            messages=messages,
-            temperature=0.2,
-            max_tokens=900
-        )
-    except Exception as e:
-        # ❗ Show exact error message (debug)
-        st.error(f"❌ AI analysis failed: {e}")
-        st.stop()
-
-        # Fallback model (if needed)
-        resp = client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=messages,
-            temperature=0.2,
-            max_tokens=900
-        )
+    # ✅ Use a supported model (8b is stable)
+    resp = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=messages,
+        temperature=0.2,
+        max_tokens=900
+    )
 
     return resp.choices[0].message.content
 
