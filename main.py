@@ -87,8 +87,12 @@ Resume:
             temperature=0.2,
             max_tokens=900
         )
-    except Exception:
-        # ✅ Fallback model (prevents crash)
+    except Exception as e:
+        # ❗ Show exact error message (debug)
+        st.error(f"❌ AI analysis failed: {e}")
+        st.stop()
+
+        # Fallback model (if needed)
         resp = client.chat.completions.create(
             model="llama3-8b-8192",
             messages=messages,
@@ -133,7 +137,7 @@ if uploaded_files:
             try:
                 result = analyze_resume(text)
             except Exception as e:
-                st.error("❌ AI analysis failed. Please try again later.")
+                st.error(f"❌ AI analysis failed: {e}")
                 continue
 
         st.markdown("### 📊 AI Feedback")
