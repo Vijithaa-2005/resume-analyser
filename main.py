@@ -3,22 +3,37 @@ from PyPDF2 import PdfReader
 from groq import Groq
 import re
 
-# --- Setup ---
-api_key = st.secrets["GROQ_API_KEY"]
+# ---------------- SETUP ----------------
+st.set_page_config(page_title="Enhanced AI Resume Coach", layout="centered")
+
+api_key = st.secrets.get("GROQ_API_KEY")
+if not api_key:
+    st.error("❌ GROQ_API_KEY not found in Streamlit secrets.")
+    st.stop()
+
 client = Groq(api_key=api_key)
 
-# --- PDF extract ---
+# ---------------- PDF TEXT EXTRACTION ----------------
 def extract_text_from_pdf(uploaded_file):
-    pdf = PdfReader(uploaded_file)
-    return "".join(page.extract_text() or "" for page in pdf.pages)
+    try:
+        pdf = PdfReader(uploaded_file)
+        text = ""
+        for page in pdf.pages:
+            text += page.extract_text() or ""
+        return text.strip()
+    except Exception:
+        return ""
 
-# --- Basic resume content check ---
+# ---------------- RESUME VALIDATION ----------------
 def is_resume(text):
-    keywords = ["education", "experience", "skills", "projects", "resume", "profile", "certification"]
+    keywords = [
+        "education", "experience", "skills", "projects",
+        "resume", "profile", "certification"
+    ]
     match_count = sum(1 for word in keywords if re.search(word, text, re.IGNORECASE))
     return match_count >= 2
 
-# --- Template suggestion mapping ---
+# ---------------- TEMPLATE MAP ----------------
 def get_template_image_url(template_name):
     template_map = {
         "Minimalist Classic": {
@@ -36,62 +51,99 @@ def get_template_image_url(template_name):
     }
     return template_map.get(template_name, {})
 
-# --- AI analysis ---
+# ---------------- AI ANALYSIS (FIXED) ----------------
 def analyze_resume(text):
+    # 🔒 Token safety (MOST IMPORTANT FIX)
+    text = text[:6000]
+
     prompt = f"""
 You are an expert career coach. Analyze this resume and provide:
-1.  Suggested Job Titles
-2.  Key Strengths
-3.  Areas of Improvement
-4.  Missing Keywords for data science
-5.  Estimated ATS pass probability (0–100%)
-6.  Section recommendations (e.g., add Projects, Portfolio link)
-7.  Resume style feedback
-8.  Suggest one best-fitting resume template name from only these options: Minimalist Classic, Modern Creative, One-page Professional. Return only one name.
+1. Suggested Job Titles
+2. Key Strengths
+3. Areas of Improvement
+4. Missing Keywords for Data Science
+5. Estimated ATS pass probability (0–100%)
+6. Section recommendations
+7. Resume style feedback
+8. Suggest ONE best-fitting resume template name from ONLY these:
+   - Minimalist Classic
+   - Modern Creative
+   - One-page Professional
 
 Resume:
 {text}
 """
-    resp = client.chat.completions.create(
-        model="llama3-70b-8192",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2
-    )
+
+    messages = [
+        {"role": "system", "content": "You are a professional resume reviewer."},
+        {"role": "user", "content": prompt}
+    ]
+
+    try:
+        # 🔥 Try large model first
+        resp = client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=messages,
+            temperature=0.2,
+            max_tokens=900
+        )
+    except Exception:
+        # ✅ Fallback model (prevents crash)
+        resp = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=messages,
+            temperature=0.2,
+            max_tokens=900
+        )
+
     return resp.choices[0].message.content
 
-# --- Extract recommended template name from AI output ---
+# ---------------- TEMPLATE NAME EXTRACTION ----------------
 def extract_template_name(response_text):
     for name in ["Minimalist Classic", "Modern Creative", "One-page Professional"]:
-        pattern = rf"\b{name}\b"
-        if re.search(pattern, response_text):
+        if re.search(rf"\b{name}\b", response_text):
             return name
     return None
 
-# --- Streamlit UI ---
-st.set_page_config(page_title="Enhanced AI Resume Coach", layout="centered")
-st.title(" AI Resume Analyzer & Template Advisor")
+# ---------------- STREAMLIT UI ----------------
+st.title("🧠 AI Resume Analyzer & Template Advisor")
 
-uploaded_files = st.file_uploader("Upload one or more resumes (PDFs)", type=["pdf"], accept_multiple_files=True)
+uploaded_files = st.file_uploader(
+    "Upload one or more resumes (PDF only)",
+    type=["pdf"],
+    accept_multiple_files=True
+)
+
 if uploaded_files:
     for uploaded in uploaded_files:
-        st.markdown(f"---\n### 📄 Analyzing: {uploaded.name}")
-        text = extract_text_from_pdf(uploaded)
-        if text.strip():
-            if not is_resume(text):
-                st.error("❌ This doesn't appear to be a resume. Please upload a valid resume PDF.")
-            else:
-                with st.spinner(" Analyzing with AI..."):
-                    result = analyze_resume(text)
-                st.markdown("####  AI Feedback:")
-                st.markdown(result, unsafe_allow_html=True)
+        st.markdown("---")
+        st.subheader(f"📄 Analyzing: {uploaded.name}")
 
-                recommended_template = extract_template_name(result)
-                if recommended_template:
-                    template_info = get_template_image_url(recommended_template)
-                    if template_info:
-                        st.markdown("####  Recommended Resume Template")
-                        st.image(template_info["img"], use_container_width=True)
-                        st.markdown(f"**Recommended Style**: {recommended_template}")
-                        st.markdown(f"[ View or Download Template]({template_info['link']})")
-        else:
-            st.error("Couldn't extract text, try another PDF.")
+        text = extract_text_from_pdf(uploaded)
+
+        if not text:
+            st.error("❌ Unable to extract text. Try another PDF.")
+            continue
+
+        if not is_resume(text):
+            st.error("❌ This does not appear to be a valid resume.")
+            continue
+
+        with st.spinner("🔍 Analyzing with AI..."):
+            try:
+                result = analyze_resume(text)
+            except Exception as e:
+                st.error("❌ AI analysis failed. Please try again later.")
+                continue
+
+        st.markdown("### 📊 AI Feedback")
+        st.markdown(result)
+
+        recommended_template = extract_template_name(result)
+        if recommended_template:
+            template_info = get_template_image_url(recommended_template)
+            if template_info:
+                st.markdown("### 🎨 Recommended Resume Template")
+                st.image(template_info["img"], use_container_width=True)
+                st.markdown(f"**Style**: {recommended_template}")
+                st.markdown(f"[🔗 View Template]({template_info['link']})")
