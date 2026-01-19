@@ -3,17 +3,17 @@ from PyPDF2 import PdfReader
 from groq import Groq
 import re
 
-# ---------------- SETUP ----------------
+
 st.set_page_config(page_title="Enhanced AI Resume Coach", layout="centered")
 
 api_key = st.secrets.get("GROQ_API_KEY")
 if not api_key:
-    st.error("❌ GROQ_API_KEY not found in Streamlit secrets.")
+    st.error(" GROQ_API_KEY not found in Streamlit secrets.")
     st.stop()
 
 client = Groq(api_key=api_key)
 
-MODEL_NAME = "llama-3.1-8b-instant"  # ✅ SUPPORTED & STABLE MODEL
+MODEL_NAME = "llama-3.1-8b-instant"  #  SUPPORTED & STABLE MODEL
 
 # ---------------- PDF TEXT EXTRACTION ----------------
 def extract_text_from_pdf(uploaded_file):
@@ -55,7 +55,7 @@ def get_template_image_url(template_name):
 
 # ---------------- AI ANALYSIS ----------------
 def analyze_resume(text):
-    text = text[:6000]  # 🔒 Token safety
+    text = text[:6000]  #  Token safety
 
     prompt = f"""
 You are an expert career coach. Analyze this resume and provide:
@@ -77,7 +77,7 @@ Resume:
 
     try:
         response = client.chat.completions.create(
-            model=MODEL_NAME,   # ✅ FIXED
+            model=MODEL_NAME,   #  FIXED
             messages=[
                 {"role": "system", "content": "You are a professional resume reviewer."},
                 {"role": "user", "content": prompt}
@@ -88,7 +88,7 @@ Resume:
         return response.choices[0].message.content
 
     except Exception as e:
-        return f"❌ AI Error: {str(e)}"
+        return f" AI Error: {str(e)}"
 
 # ---------------- TEMPLATE NAME EXTRACTION ----------------
 def extract_template_name(response_text):
@@ -98,7 +98,7 @@ def extract_template_name(response_text):
     return None
 
 # ---------------- STREAMLIT UI ----------------
-st.title("🧠 AI Resume Analyzer & Template Advisor")
+st.title(" AI Resume Analyzer & Template Advisor")
 
 uploaded_files = st.file_uploader(
     "Upload one or more resumes (PDF only)",
@@ -114,17 +114,17 @@ if uploaded_files:
         text = extract_text_from_pdf(uploaded)
 
         if not text:
-            st.error("❌ Unable to extract text. Try another PDF.")
+            st.error(" Unable to extract text. Try another PDF.")
             continue
 
         if not is_resume(text):
-            st.error("❌ This does not appear to be a valid resume.")
+            st.error(" This does not appear to be a valid resume.")
             continue
 
-        with st.spinner("🔍 Analyzing with AI..."):
+        with st.spinner(" Analyzing with AI..."):
             result = analyze_resume(text)
 
-        st.markdown("### 📊 AI Feedback")
+        st.markdown("###  AI Feedback")
         st.markdown(result)
 
         recommended_template = extract_template_name(result)
