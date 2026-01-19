@@ -109,7 +109,7 @@ uploaded_files = st.file_uploader(
 if uploaded_files:
     for uploaded in uploaded_files:
         st.markdown("---")
-        st.subheader(f"📄 Analyzing: {uploaded.name}")
+        st.subheader(f" Analyzing: {uploaded.name}")
 
         text = extract_text_from_pdf(uploaded)
 
@@ -131,7 +131,7 @@ if uploaded_files:
         if recommended_template:
             template_info = get_template_image_url(recommended_template)
             if template_info:
-                st.markdown("### 🎨 Recommended Resume Template")
+                st.markdown("###  Recommended Resume Template")
                 st.image(template_info["img"], use_container_width=True)
                 st.markdown(f"**Style**: {recommended_template}")
-                st.markdown(f"[🔗 View Template]({template_info['link']})")
+                st.markdown(f"[ View Template]({template_info['link']})")
