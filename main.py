@@ -13,6 +13,8 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
+MODEL_NAME = "llama-3.1-8b-instant"  # ✅ SUPPORTED & STABLE MODEL
+
 # ---------------- PDF TEXT EXTRACTION ----------------
 def extract_text_from_pdf(uploaded_file):
     try:
@@ -51,10 +53,9 @@ def get_template_image_url(template_name):
     }
     return template_map.get(template_name, {})
 
-# ---------------- AI ANALYSIS (FIXED) ----------------
+# ---------------- AI ANALYSIS ----------------
 def analyze_resume(text):
-    # 🔒 Token safety (MOST IMPORTANT FIX)
-    text = text[:6000]
+    text = text[:6000]  # 🔒 Token safety
 
     prompt = f"""
 You are an expert career coach. Analyze this resume and provide:
@@ -74,25 +75,25 @@ Resume:
 {text}
 """
 
-    messages = [
-        {"role": "system", "content": "You are a professional resume reviewer."},
-        {"role": "user", "content": prompt}
-    ]
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,   # ✅ FIXED
+            messages=[
+                {"role": "system", "content": "You are a professional resume reviewer."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            max_tokens=900
+        )
+        return response.choices[0].message.content
 
-    # ✅ Use a supported model (8b is stable)
-    resp = client.chat.completions.create(
-        model="llama3-8b-8192",
-        messages=messages,
-        temperature=0.2,
-        max_tokens=900
-    )
-
-    return resp.choices[0].message.content
+    except Exception as e:
+        return f"❌ AI Error: {str(e)}"
 
 # ---------------- TEMPLATE NAME EXTRACTION ----------------
 def extract_template_name(response_text):
     for name in ["Minimalist Classic", "Modern Creative", "One-page Professional"]:
-        if re.search(rf"\b{name}\b", response_text):
+        if re.search(rf"\b{name}\b", response_text, re.IGNORECASE):
             return name
     return None
 
@@ -121,11 +122,7 @@ if uploaded_files:
             continue
 
         with st.spinner("🔍 Analyzing with AI..."):
-            try:
-                result = analyze_resume(text)
-            except Exception as e:
-                st.error(f"❌ AI analysis failed: {e}")
-                continue
+            result = analyze_resume(text)
 
         st.markdown("### 📊 AI Feedback")
         st.markdown(result)
